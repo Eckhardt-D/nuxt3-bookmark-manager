@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { type Bookmark } from "~/server/src/bookmarks";
+import { Bookmark } from "~/server/src/bookmarks";
 
 const bookmarkUrl = ref("");
 
@@ -8,16 +8,16 @@ const { data: bookmarks, pending } = await useAsyncData(() =>
 );
 
 const addBookmark = async () => {
-  const bookmark = await $fetch("/api/bookmarks", {
+  if (bookmarks.value === null) return;
+
+  const bookmark = await $fetch("/api/bookmarks/create", {
     method: "post",
     body: {
       url: bookmarkUrl.value,
     },
   });
 
-  if (bookmarks.value === null) return;
-
-  bookmarks.value = [...(bookmarks.value as Bookmark[]), bookmark as Bookmark];
+  bookmarks.value.push(bookmark);
   bookmarkUrl.value = "";
 };
 </script>
@@ -37,11 +37,11 @@ const addBookmark = async () => {
     </form>
 
     <div v-if="pending">Loading...</div>
-    <div v-else-if="(bookmarks as Bookmark[]).length > 0">
+    <div v-else-if="bookmarks && bookmarks.length > 0">
       <ul class="bookmark-list">
         <li
           class="bookmark-item"
-          v-for="bookmark in (bookmarks as Bookmark[])"
+          v-for="bookmark in bookmarks"
           :key="bookmark.id"
         >
           <a class="bookmark-link" :href="bookmark.url" target="_blank">
